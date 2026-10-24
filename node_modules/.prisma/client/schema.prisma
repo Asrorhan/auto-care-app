@@ -1,0 +1,59 @@
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://neondb_owner:npg_8QmWBnhcGo0C@ep-divine-mountain-b4nl0ib5-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  DRIVER
+}
+
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  users     User[]
+  vehicles  Vehicle[]
+}
+
+model User {
+  id             String              @id @default(uuid())
+  companyId      String
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fullName       String
+  phone          String              @unique
+  passwordHash   String
+  role           Role                @default(DRIVER)
+  telegramChatId String?
+  createdAt      DateTime            @default(now())
+  assignments    VehicleAssignment[]
+}
+
+model Vehicle {
+  id             String              @id @default(uuid())
+  companyId      String
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plateNumber    String              @unique
+  makeModel      String
+  year           Int
+  currentMileage Int                 @default(0)
+  dailyAvgKm     Int                 @default(50)
+  createdAt      DateTime            @default(now())
+  assignments    VehicleAssignment[]
+}
+
+model VehicleAssignment {
+  id           String    @id @default(uuid())
+  vehicleId    String
+  vehicle      Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId     String
+  driver       User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+  isActive     Boolean   @default(true)
+}
